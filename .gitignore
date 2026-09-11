@@ -1,0 +1,13 @@
+node_modules/
+config.toml
+data/
+hf-cache/
+*.lancedb
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

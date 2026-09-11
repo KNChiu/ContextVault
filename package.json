@@ -1,0 +1,26 @@
+{
+  "name": "contextvault",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@huggingface/transformers": "^4.2.0",
+    "@lancedb/lancedb": "^0.16.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "onnxruntime-node": "^1.21.0",
+    "sharp": "^0.35.4",
+    "zod": "^3.24.0"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "trustedDependencies": [
+    "onnxruntime-node",
+    "protobufjs"
+  ],
+  "devDependencies": {
+    "bun-types": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

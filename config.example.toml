@@ -1,0 +1,62 @@
+[server]
+port = 8787
+# WSL drvfs: dataDir must NOT be on /mnt/d (file locking unreliable)
+dataDir = "/data/contextvault/lancedb"
+
+[models]
+cacheDir = "/data/contextvault/hf-cache"
+
+[embedding]
+model = "Xenova/multilingual-e5-small"
+dims = 384
+
+[tagging]
+# provider = "local": in-process Qwen2.5-0.5B via transformers.js (first use pays model load)
+# provider = "api": OpenAI-compatible chat completions via raw fetch
+provider = "local"
+model = "onnx-community/Qwen2.5-0.5B-Instruct"
+enabled = true
+# Only used with provider = "api":
+# baseURL = "https://api.openai.com/v1"
+# apiKeyEnv = "CV_TAGGING_API_KEY"   # name of env var holding the API key
+
+[reranker]
+enabled = true
+candidates = 20
+model = "Xenova/bge-reranker-base"
+# Fallback (if base fails): onnx-community/bge-reranker-v2-m3-ONNX
+
+[chunk]
+size = 512
+overlap = 64
+
+[convert]
+enabled = true
+# Path to the markitdown CLI (Python venv)
+bin = "/path/to/venv/bin/markitdown"
+formats = ["pptx", "pdf", "docx", "xlsx"]
+timeoutSec = 300
+maxBinaryBytes = 20971520
+
+[limits]
+maxUploadBytes = 1048576
+getDocumentMax = 65536
+topKMax = 20
+sourceMaxLen = 256
+mergedTextMax = 2000
+
+# API keys are NEVER stored in config. Each [[keys]] entry names the env var
+# that holds the actual key value (e.g. export CV_KEY_ADMIN=...).
+[[keys]]
+keyEnv = "CV_KEY_ADMIN"
+user = "admin"
+admin = true
+allowedTags = ["ops", "sec", "hr", "eng", "all"]
+
+[[keys]]
+keyEnv = "CV_KEY_VIEWER"
+user = "viewer"
+allowedTags = ["ops"]
+
+[vocabulary]
+tags = ["ops", "sec", "hr", "eng", "all", "facility", "machine-a", "machine-b"]

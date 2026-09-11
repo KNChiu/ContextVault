@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ContextVault — Secure Document Archive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Instrument+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --surface-2: #f8f7f3;
+  --surface-3: #f6f4ef;
+  --ink: #1c1b18;
+  --ink-2: #3d3a33;
+  --muted: #6f6a5e;
+  --faint: #9a9488;
+  --line: #e7e3d8;
+  --line-2: #d6d1c2;
+  --accent: #2f4b63;
+  --accent-hover: #243c50;
+  --accent-tint: #eef2f6;
+  --green: #2d6a4f;
+  --amber: #b07d2b;
+  --blue: #2f5f8f;
+  --violet: #6d5a8f;
+  --red: #b03a2e;
+  --serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --sans: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;
+  --mono: 'Fragment Mono', 'IBM Plex Mono', 'Courier New', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  background:
+    radial-gradient(1100px 380px at 50% -8%, #ffffff, transparent 70%),
+    var(--bg);
+  min-height: 100vh;
+  padding: 28px 32px 80px;
+}
+.hidden { display: none !important; }
+.page { max-width: 1160px; margin: 0 auto; }
+
+/* ---------- header ---------- */
+.vault-header {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+  padding-bottom: 16px; margin-bottom: 30px;
+  border-bottom: 1px solid var(--line);
+}
+.wordmark h1 { font-family: var(--serif); font-weight: 500; font-size: 1.45rem; letter-spacing: -0.01em; line-height: 1.2; }
+.wordmark p { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.operator-chip {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--line); border-radius: 7px;
+  background: var(--surface);
+  padding: 8px 12px;
+}
+.op-label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.op-key { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+
+/* ---------- surfaces ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(28,27,24,.04);
+  padding: 22px;
+}
+.panel-title { font-family: var(--serif); font-weight: 500; font-size: 1.05rem; letter-spacing: 0; }
+.intake .panel-title { padding-bottom: 14px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+
+/* ---------- forms ---------- */
+.field { margin-bottom: 16px; }
+.field-label { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+.field-hint { color: var(--faint); letter-spacing: .06em; }
+input[type=text], input[type=password], input[type=number], select, textarea {
+  width: 100%;
+  font-family: var(--sans); font-size: 13.5px; color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: 7px;
+  padding: 9px 11px;
+}
+textarea { font-family: var(--mono); font-size: 12.5px; line-height: 1.55; resize: vertical; min-height: 112px; }
+input::placeholder, textarea::placeholder { color: var(--faint); }
+input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-tint); }
+
+.btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 8px 14px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+  border: 1px solid transparent; background: none;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.btn:active:not(:disabled) { transform: translateY(.5px); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-ghost { border-color: var(--line-2); color: var(--ink-2); background: var(--surface); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--faint); background: var(--surface-3); }
+.btn-danger { border-color: #e4cdc9; color: var(--red); background: var(--surface); }
+.btn-danger:hover:not(:disabled) { border-color: var(--red); background: #fbf0ee; }
+.btn-xs { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+.btn-block { width: 100%; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- gate ---------- */
+.gate-wrap { display: flex; justify-content: center; padding-top: 8vh; }
+.gate-card { width: 420px; }
+.gate-card .panel-title { padding-bottom: 14px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.gate-desc { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; }
+.gate-error { font-size: 12.5px; color: var(--red); margin-top: 10px; }
+
+/* ---------- banner ---------- */
+.banner {
+  display: flex; align-items: center; gap: 14px;
+  background: #fbf4e4; border: 1px solid #eadfc2; border-radius: 8px;
+  padding: 12px 16px; margin-bottom: 22px;
+}
+.banner-text { flex: 1; font-size: 13.5px; color: #6b5a30; }
+
+/* ---------- layout grid ---------- */
+.vault-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap: 24px; align-items: start; }
+.intake { position: sticky; top: 24px; }
+
+/* ---------- dropzone ---------- */
+.dropzone {
+  border: 1.5px dashed var(--line-2);
+  border-radius: 8px;
+  padding: 18px 12px;
+  margin-bottom: 8px;
+  text-align: center;
+  transition: border-color .15s, background .15s;
+}
+.dropzone.dropping { border-color: var(--accent); background: var(--accent-tint); }
+.dropzone label { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink-2); }
+.dropzone label:hover { color: var(--accent); }
+.dropzone input[type=file] { display: none; }
+.dz-hint { display: block; margin-top: 6px; font-size: 11.5px; color: var(--faint); }
+.file-note { font-family: var(--mono); font-size: 11.5px; color: var(--accent); margin: 8px 0 14px; word-break: break-all; }
+
+/* ---------- tag checks ---------- */
+.tag-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px 12px; }
+.tag-check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--ink-2); padding: 4px 2px; cursor: pointer; border-radius: 5px; }
+.tag-check:hover { background: var(--surface-3); }
+.tag-check input { accent-color: var(--accent); }
+
+/* ---------- manifest ---------- */
+.manifest-head { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; margin-bottom: 4px; border-bottom: 1px solid var(--line); }
+.filter-input { width: 200px; margin-left: auto; font-size: 13px; padding: 6px 10px; }
+.doc-list { }
+.doc-entry { border-bottom: 1px solid var(--line); }
+.doc-entry:last-child { border-bottom: none; }
+.doc-entry:hover { background: var(--surface-3); }
+.doc-entry.open { background: var(--surface-3); }
+.doc-row {
+  display: grid;
+  grid-template-columns: minmax(170px, 2.2fr) 112px minmax(140px, 1.8fr) 92px auto;
+  gap: 14px; align-items: center;
+  padding: 13px 6px;
+  cursor: pointer;
+}
+.doc-entry:last-child .doc-row { border-radius: 0 0 10px 10px; }
+.doc-source { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-date { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.doc-actions { display: flex; align-items: center; gap: 8px; }
+.chev { color: var(--faint); font-size: 11px; transition: transform .18s; display: inline-block; width: 12px; text-align: center; }
+.doc-entry.open .chev { transform: rotate(90deg); }
+
+/* ---------- status ---------- */
+.status { display: inline-flex; align-items: center; gap: 7px; }
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
+.status-label { font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+.status-done .status-dot { background: var(--green); }
+.status-pending .status-dot { background: var(--amber); }
+.status-indexing .status-dot { background: var(--blue); }
+.status-converting .status-dot { background: var(--violet); }
+.status-failed .status-dot { background: var(--red); }
+.status-failed .status-label { color: var(--red); }
+.status.fresh { animation: state-fade .35s ease both; }
+@keyframes state-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- tags ---------- */
+.tags-cell { display: flex; flex-wrap: wrap; }
+.tag {
+  display: inline-block; font-size: 12px; color: var(--ink-2);
+  padding: 3px 8px; margin: 2px 4px 2px 0;
+  background: var(--surface); border: 1px solid var(--line-2); border-radius: 5px;
+}
+.tag-kw { color: var(--accent); background: var(--accent-tint); border-color: #d8e2ea; }
+
+/* ---------- detail ---------- */
+.doc-detail { padding: 8px 16px 20px; background: var(--surface-2); border-top: 1px solid var(--line); }
+.detail-label { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; }
+.detail-summary { font-size: 13.5px; line-height: 1.6; color: var(--ink-2); }
+.detail-muted { font-size: 13px; color: var(--faint); }
+.detail-id { font-family: var(--mono); font-size: 12px; color: var(--muted); word-break: break-all; }
+.detail-error { font-family: var(--mono); font-size: 12px; color: var(--red); background: #fbf0ee; border-left: 3px solid var(--red); border-radius: 0 6px 6px 0; padding: 8px 11px; word-break: break-all; }
+.detail-tagrow { display: flex; align-items: flex-start; gap: 12px; }
+.detail-tagrow .tags-cell { flex: 1; }
+.tag-editor { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.tag-editor-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px 12px; margin-bottom: 12px; }
+.tag-editor-actions { display: flex; gap: 8px; }
+
+/* ---------- empty state ---------- */
+.empty { text-align: center; padding: 56px 10px; }
+.empty-title { font-family: var(--serif); font-style: italic; font-weight: 400; font-size: 1.15rem; color: var(--muted); }
+.empty-sub { font-size: 12.5px; color: var(--faint); margin-top: 6px; }
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+.tab { font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--muted); background: none; border: none; border-bottom: 2px solid transparent; padding: 8px 14px; cursor: pointer; margin-bottom: -1px; }
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+
+/* ---------- test console ---------- */
+.test-grid { display: grid; grid-template-columns: 380px minmax(0, 1fr); gap:  24px; align-items: start; }
+.test-forms { display: flex; flex-direction: column; gap:  16px; position: sticky; top: 24px; }
+.test-section { padding: 18px; }
+.raw-section summary { cursor: pointer; font-family: var(--serif); font-weight: 500; font-size: 1rem; list-style: none; }
+.raw-section summary::-webkit-details-marker { display: none; }
+.raw-section[open] summary { padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.test-section .panel-title { font-size: 1rem; padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--line); }
+.raw-args { font-family: var(--mono); font-size: 12px; min-height: 130px; }
+.test-output { display: flex; flex-direction: column; min-height: 420px; }
+.pg-meta { display: flex; align-items: center; gap:  9px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; color: var(--muted); padding-bottom: 12px; margin-bottom: 14px; border-bottom: 1px solid var(--line); text-transform: uppercase; }
+.pg-dot { width:  8px; height:  8px; border-radius: 50%; background: var(--faint); flex:  0 0 auto; }
+.pg-dot-busy { background: var(--amber); animation: pulse 1s ease-in-out infinite; }
+.pg-dot-ok { background: var(--green); }
+.pg-dot-error { background: var(--red); }
+@keyframes pulse { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
+.pg-empty { flex:  1; display: flex; align-items: center; justify-content: center; font-family: var(--serif); font-style: italic; color: var(--faint); font-size: 1.05rem; }
+.pg-output { flex:  1; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; background: var(--surface-2); border:  1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow: auto; max-height: 62vh; white-space: pre-wrap; word-break: break-word; animation: out-in .2s ease both; }
+.pg-error { border-left: 3px solid var(--red); color: var(--red); }
+@keyframes out-in { from { opacity:  0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.pg-raw-wrap { margin-top:  14px; }
+.pg-raw-wrap summary { cursor: pointer; font-family: var(--mono); font-size:  11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.pg-raw { margin-top:  10px; font-family: var(--mono); font-size: 11.5px; line-height: 1.5; background: var(--surface-2); border:  1px solid var(--line); border-radius: 8px; padding: 12px; overflow: auto; max-height: 40vh; white-space: pre-wrap; word-break: break-word; }
+
+/* ---------- toast ---------- */
+#toast { position: fixed; right: 24px; bottom: 24px; z-index: 1000; max-width: 380px; }
+.toast-slip {
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 8px;
+  box-shadow: 0 6px 24px rgba(28,27,24,.1);
+  padding: 12px 15px; font-size: 13px; line-height: 1.5;
+  animation: slip-in .22s ease both;
+}
+.toast-slip.warning { border-left-color: var(--red); }
+@keyframes slip-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ---------- reveal ---------- */
+.reveal { animation: rise .45s cubic-bezier(.25,.7,.3,1) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="vault-header">
+    <div class="wordmark reveal">
+      <h1>ContextVault</h1>
+      <p>Secure document archive</p>
+    </div>
+    <div id="operator-chip" class="operator-chip hidden">
+      <span class="op-label">API key</span>
+      <span id="operator-mask" class="op-key">●●●●●●</span>
+      <button id="change-key-btn" class="btn btn-ghost btn-xs">Change</button>
+    </div>
+  </header>
+
+  <div id="gate" class="gate-wrap">
+    <div class="panel gate-card reveal" style="animation-delay:.06s">
+      <h2 class="panel-title">Sign in</h2>
+      <p class="gate-desc">Enter your API key to access the archive.</p>
+      <input id="key-input" type="password" placeholder="API key" autocomplete="off">
+      <div id="gate-error" class="gate-error hidden"></div>
+      <button id="key-btn" class="btn btn-primary btn-block" style="margin-top:16px">Continue</button>
+    </div>
+  </div>
+
+  <div id="vault" class="hidden">
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-view="doc">Documents</button>
+      <button class="tab" data-view="test">Test console</button>
+    </nav>
+
+    <div id="doc-view">
+    <div id="mismatch-banner" class="banner hidden">
+      <span class="banner-text">Embedding model mismatch — documents must be re-embedded.</span>
+      <button id="reembed-banner-btn" class="btn btn-ghost btn-xs">Re-embed all</button>
+    </div>
+
+    <div class="vault-grid">
+      <section class="panel intake reveal" style="animation-delay:.06s">
+        <h2 class="panel-title">Upload document</h2>
+        <div class="field">
+          <label class="field-label" for="upload-source">Source or filename</label>
+          <input id="upload-source" type="text" placeholder="e.g. incident-report.md">
+        </div>
+        <div class="field">
+          <label class="field-label" for="upload-content">Document text</label>
+          <textarea id="upload-content" placeholder="Paste document content here…"></textarea>
+        </div>
+        <div class="dropzone" id="dropzone">
+          <label for="upload-file">Drop a file or browse</label>
+          <input id="upload-file" type="file" accept=".md,.markdown,.txt,.pdf,.pptx,.docx,.xlsx">
+          <span class="dz-hint">.md .txt .pdf .pptx .docx .xlsx — converted server-side</span>
+        </div>
+        <div id="file-note" class="file-note hidden"></div>
+        <div class="field">
+          <div class="field-label">Access tags <span class="field-hint">(select at least one — use <code>all</code> for unrestricted access)</span></div>
+          <div id="upload-tags" class="tag-grid"></div>
+        </div>
+        <button id="upload-btn" class="btn btn-primary btn-block">Upload</button>
+      </section>
+
+      <section class="panel reveal" style="animation-delay:.12s">
+        <div class="manifest-head">
+          <h2 class="panel-title">Documents</h2>
+          <input id="filter-input" type="text" class="filter-input" placeholder="Filter documents…">
+          <button id="refresh-btn" class="btn btn-ghost btn-xs">Refresh</button>
+          <button id="reembed-btn" class="btn btn-ghost btn-xs">Re-embed all</button>
+        </div>
+        <div id="doc-list" class="doc-list"></div>
+      </section>
+    </div>
+    </div>
+
+    <div id="test-view" class="hidden">
+      <div class="test-grid">
+        <div class="test-forms">
+          <section class="panel test-section">
+            <h2 class="panel-title">rag_search</h2>
+            <div class="field">
+              <label class="field-label" for="pg-query">Query</label>
+              <input id="pg-query" type="text" placeholder="Search query">
+            </div>
+            <div class="field">
+              <label class="field-label" for="pg-topk">Top K</label>
+              <input id="pg-topk" type="number" value="3" min="1" max="20">
+            </div>
+            <div class="field">
+              <div class="field-label">Tag filter <span class="field-hint">(optional)</span></div>
+              <div id="test-tags" class="tag-grid"></div>
+            </div>
+            <button id="pg-search-btn" class="btn btn-primary btn-block pg-call-btn">Search</button>
+          </section>
+
+          <section class="panel test-section">
+            <h2 class="panel-title">get_document</h2>
+            <div class="field">
+              <label class="field-label" for="pg-source">Source</label>
+              <input id="pg-source" type="text" placeholder="Document source name">
+            </div>
+            <div class="field">
+              <label class="field-label" for="pg-section">Section <span class="field-hint">(optional)</span></label>
+              <input id="pg-section" type="text" placeholder="Section path">
+            </div>
+            <button id="pg-fetch-btn" class="btn btn-primary btn-block pg-call-btn">Fetch</button>
+          </section>
+
+          <details class="panel test-section raw-section">
+            <summary>Raw call</summary>
+            <div class="field">
+              <label class="field-label" for="pg-tool">Tool</label>
+              <select id="pg-tool">
+                <option value="rag_search">rag_search</option>
+                <option value="get_document">get_document</option>
+                <option value="upload_document">upload_document</option>
+                <option value="get_task_status">get_task_status</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="field-label" for="pg-args">Arguments (JSON)</label>
+              <textarea id="pg-args" class="raw-args" spellcheck="false"></textarea>
+            </div>
+            <button id="pg-call-btn" class="btn btn-primary btn-block pg-call-btn">Call</button>
+          </details>
+        </div>
+
+        <section class="panel test-output">
+          <div class="pg-meta">
+            <span id="pg-dot" class="pg-dot"></span>
+            <span id="pg-meta-text" class="pg-meta-text">Idle</span>
+          </div>
+          <div id="pg-empty" class="pg-empty">Run a call to see output.</div>
+          <pre id="pg-output" class="pg-output hidden"></pre>
+          <details id="pg-raw-wrap" class="pg-raw-wrap hidden">
+            <summary>Raw JSON</summary>
+            <pre id="pg-raw" class="pg-raw"></pre>
+          </details>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"><div id="toast-slip" class="toast-slip hidden" aria-live="polite"></div></div>
+</div>
+
+<script>
+const API_KEY_KEY = 'contextvault_api_key';
+const NON_TERMINAL = ['pending', 'indexing', 'converting'];
+let apiKey = localStorage.getItem(API_KEY_KEY) || '';
+let vocabulary = [];
+let allDocs = [];
+let filterText = '';
+let pendingBinary = null;
+let refreshTimer = null;
+let toastTimer = null;
+const activeTasks = new Set();
+const lastStatus = new Map();
+
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;
+  return n;
+}
+
+function showStatus(msg, type = 'info') {
+  const slip = document.getElementById('toast-slip');
+  slip.textContent = msg;
+  slip.className = 'toast-slip' + (type === 'warning' ? ' warning' : '');
+  slip.classList.remove('hidden');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => slip.classList.add('hidden'), 6000);
+}
+
+async function api(path, options = {}) {
+  const resp = await fetch(path, {
+    ...options,
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+  });
+  let data = null;
+  try { data = await resp.json(); } catch {}
+  if (!resp.ok) {
+    const err = new Error((data && data.error) || `HTTP ${resp.status}`);
+    err.status = resp.status;
+    throw err;
+  }
+  return data;
+}
+
+function setGateError(msg) {
+  const e = document.getElementById('gate-error');
+  e.textContent = msg;
+  e.classList.remove('hidden');
+}
+
+function showGate(message) {
+  document.getElementById('gate').classList.remove('hidden');
+  document.getElementById('vault').classList.add('hidden');
+  document.getElementById('operator-chip').classList.add('hidden');
+  if (message) setGateError(message);
+}
+
+function showVault() {
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('vault').classList.remove('hidden');
+  document.getElementById('operator-chip').classList.remove('hidden');
+  const k = apiKey;
+  document.getElementById('operator-mask').textContent = k.length <= 4 ? '●●●●' : `${k.slice(0, 3)}●●●●${k.slice(-2)}`;
+}
+
+async function unlock() {
+  const input = document.getElementById('key-input');
+  const key = input.value.trim();
+  if (!key) { setGateError('API key is required.'); return; }
+  try {
+    const resp = await fetch('/api/vocabulary', { headers: { 'Authorization': `Bearer ${key}` } });
+    if (!resp.ok) { setGateError(resp.status === 401 ? 'API key rejected.' : `Error ${resp.status}.`); return; }
+    apiKey = key;
+    localStorage.setItem(API_KEY_KEY, key);
+    await enterVault();
+  } catch {
+    setGateError('Cannot reach server.');
+  }
+}
+
+async function enterVault() {
+  try {
+    const data = await api('/api/vocabulary');
+    vocabulary = data.tags;
+    renderVocab();
+  } catch (e) {
+    showGate(e.status === 401 ? 'API key rejected.' : 'Server unreachable.');
+    return;
+  }
+  showVault();
+  loadDocs();
+}
+
+function buildTagChecks(containerId) {
+  const box = document.getElementById(containerId);
+  box.textContent = '';
+  for (const t of vocabulary) {
+    const label = el('label', 'tag-check');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = t;
+    label.appendChild(cb);
+    label.appendChild(el('span', '', t));
+    box.appendChild(label);
+  }
+}
+
+function renderVocab() {
+  buildTagChecks('upload-tags');
+  buildTagChecks('test-tags');
+}
+
+function scheduleRefresh() {
+  if (refreshTimer) return;
+  refreshTimer = setTimeout(() => { refreshTimer = null; loadDocs(); }, 2000);
+}
+
+async function loadDocs() {
+  try {
+    const data = await api('/api/documents');
+    allDocs = data.documents;
+    document.getElementById('mismatch-banner').classList.toggle('hidden', !data.modelMismatch);
+    renderDocs();
+    for (const id of [...activeTasks]) {
+      const doc = allDocs.find(d => d.doc_id === id);
+      if (!doc) continue;
+      if (!NON_TERMINAL.includes(doc.status)) {
+        showStatus(`Upload ${id.slice(0, 8)}…: ${doc.status}${doc.error ? ' — ' + doc.error : ''}`, doc.status === 'failed' ? 'warning' : 'info');
+        activeTasks.delete(id);
+      }
+    }
+    if (allDocs.some(d => NON_TERMINAL.includes(d.status)) || activeTasks.size > 0) scheduleRefresh();
+  } catch (e) {
+    if (e.status === 401) { showGate('API key is no longer valid.'); return; }
+    showStatus(`Failed to load documents: ${e.message}`, 'warning');
+  }
+}
+
+function emptyState(title, sub) {
+  const wrap = el('div', 'empty');
+  wrap.appendChild(el('div', 'empty-title', title));
+  wrap.appendChild(el('div', 'empty-sub', sub));
+  return wrap;
+}
+
+function renderDocs() {
+  const list = document.getElementById('doc-list');
+  list.textContent = '';
+  if (allDocs.length === 0) {
+    list.appendChild(emptyState('No documents yet', 'Upload a document to get started.'));
+    return;
+  }
+  const q = filterText.toLowerCase();
+  const docs = q
+    ? allDocs.filter(d => [d.source, ...(d.acl_tags || []), ...(d.llm_keywords || [])].join(' ').toLowerCase().includes(q))
+    : allDocs;
+  if (docs.length === 0) {
+    list.appendChild(emptyState('No matching documents', 'Try a different search term.'));
+    return;
+  }
+  for (const doc of docs) list.appendChild(buildEntry(doc));
+}
+
+function buildEntry(doc) {
+  const entry = el('div', 'doc-entry');
+  const row = el('div', 'doc-row');
+  row.tabIndex = 0;
+  row.setAttribute('aria-expanded', 'false');
+
+  row.appendChild(el('div', 'doc-source', doc.source));
+
+  const statusCell = el('div', 'status status-' + doc.status);
+  const prev = lastStatus.get(doc.doc_id);
+  if (prev === undefined || prev !== doc.status) statusCell.classList.add('fresh');
+  lastStatus.set(doc.doc_id, doc.status);
+  statusCell.appendChild(el('span', 'status-dot'));
+  statusCell.appendChild(el('span', 'status-label', doc.status));
+  row.appendChild(statusCell);
+
+  const tags = el('div', 'tags-cell');
+  for (const t of doc.acl_tags) tags.appendChild(el('span', 'tag', t));
+  row.appendChild(tags);
+
+  row.appendChild(el('div', 'doc-date', (doc.updated_at || '').slice(0, 10)));
+
+  const actions = el('div', 'doc-actions');
+  const chev = el('span', 'chev', '▸');
+  const del = el('button', 'btn btn-danger btn-xs', 'Delete');
+  del.setAttribute('aria-label', `Delete ${doc.source}`);
+  del.onclick = (e) => { e.stopPropagation(); deleteDoc(doc.doc_id, doc.source); };
+  actions.appendChild(chev);
+  actions.appendChild(del);
+  row.appendChild(actions);
+
+  const detail = buildDetail(doc);
+  const toggle = () => {
+    entry.classList.toggle('open');
+    detail.classList.toggle('hidden');
+    row.setAttribute('aria-expanded', entry.classList.contains('open') ? 'true' : 'false');
+  };
+  row.onclick = toggle;
+  row.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+
+  entry.appendChild(row);
+  entry.appendChild(detail);
+  return entry;
+}
+
+function buildDetail(doc) {
+  const wrap = el('div', 'doc-detail hidden');
+
+  wrap.appendChild(el('div', 'detail-label', 'Summary'));
+  wrap.appendChild(el('p', 'detail-summary', doc.llm_summary || '—'));
+
+  wrap.appendChild(el('div', 'detail-label', 'Keywords'));
+  const kw = el('div', 'tags-cell');
+  const keywords = doc.llm_keywords || [];
+  if (keywords.length === 0) kw.appendChild(el('span', 'detail-muted', '—'));
+  for (const k of keywords) kw.appendChild(el('span', 'tag tag-kw', k));
+  wrap.appendChild(kw);
+
+  if (doc.status === 'failed' && doc.error) {
+    wrap.appendChild(el('div', 'detail-label', 'Error'));
+    wrap.appendChild(el('div', 'detail-error', doc.error));
+  }
+
+  wrap.appendChild(el('div', 'detail-label', 'Document ID'));
+  wrap.appendChild(el('div', 'detail-id', doc.doc_id));
+
+  wrap.appendChild(el('div', 'detail-label', 'Access tags'));
+  const tagRow = el('div', 'detail-tagrow');
+  const tagBox = el('div', 'tags-cell');
+  for (const t of doc.acl_tags) tagBox.appendChild(el('span', 'tag', t));
+  const editBtn = el('button', 'btn btn-ghost btn-xs', 'Edit tags');
+  editBtn.onclick = (e) => {
+    e.stopPropagation();
+    let editor = wrap.querySelector('.tag-editor');
+    if (!editor) {
+      editor = buildTagEditor(doc);
+      wrap.appendChild(editor);
+    }
+    editor.classList.toggle('hidden');
+  };
+  tagRow.appendChild(tagBox);
+  tagRow.appendChild(editBtn);
+  wrap.appendChild(tagRow);
+
+  return wrap;
+}
+
+function buildTagEditor(doc) {
+  const editor = el('div', 'tag-editor');
+  const grid = el('div', 'tag-editor-grid');
+  for (const t of vocabulary) {
+    const label = el('label', 'tag-check');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = t;
+    cb.checked = doc.acl_tags.includes(t);
+    label.appendChild(cb);
+    label.appendChild(el('span', '', t));
+    grid.appendChild(label);
+  }
+  editor.appendChild(grid);
+
+  const actions = el('div', 'tag-editor-actions');
+  const save = el('button', 'btn btn-primary btn-xs', 'Save');
+  const cancel = el('button', 'btn btn-ghost btn-xs', 'Cancel');
+  save.onclick = async (e) => {
+    e.stopPropagation();
+    const picked = [...grid.querySelectorAll('input:checked')].map(c => c.value);
+    if (picked.length === 0) { showStatus('Select at least one access tag.', 'warning'); return; }
+    save.disabled = true;
+    try {
+      await api(`/api/documents/${doc.doc_id}/tags`, { method: 'PATCH', body: JSON.stringify({ acl_tags: picked }) });
+      showStatus(`Tags updated: ${doc.source}`);
+      loadDocs();
+    } catch (err) {
+      showStatus(`Failed to update tags: ${err.message}`, 'warning');
+      save.disabled = false;
+    }
+  };
+  cancel.onclick = (e) => { e.stopPropagation(); editor.classList.add('hidden'); };
+  actions.appendChild(save);
+  actions.appendChild(cancel);
+  editor.appendChild(actions);
+  return editor;
+}
+
+async function deleteDoc(id, source) {
+  if (!confirm(`Delete "${source}"? This permanently removes the document and its indexed fragments.`)) return;
+  try {
+    await api(`/api/documents/${id}`, { method: 'DELETE' });
+    showStatus(`Deleted: ${source}`);
+    loadDocs();
+  } catch (e) {
+    showStatus(`Failed to delete: ${e.message}`, 'warning');
+  }
+}
+
+function handleFile(file) {
+  const sourceInput = document.getElementById('upload-source');
+  if (!sourceInput.value.trim()) sourceInput.value = file.name;
+  const ext = file.name.includes('.') ? file.name.split('.').pop().toLowerCase() : '';
+  const note = document.getElementById('file-note');
+  if (['md', 'markdown', 'txt'].includes(ext)) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      document.getElementById('upload-content').value = reader.result;
+      pendingBinary = null;
+      note.textContent = `Text file loaded: ${file.name}`;
+      note.classList.remove('hidden');
+    };
+    reader.readAsText(file);
+  } else {
+    const reader = new FileReader();
+    reader.onload = () => {
+      pendingBinary = { b64: reader.result.split(',')[1], name: file.name };
+      document.getElementById('upload-content').value = '';
+      note.textContent = `Binary file queued: ${file.name} (${Math.max(1, Math.ceil(file.size / 1024))} KB) — will be converted server-side`;
+      note.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+  }
+}
+
+function resetIntake() {
+  document.getElementById('upload-source').value = '';
+  document.getElementById('upload-content').value = '';
+  document.getElementById('upload-content').placeholder = 'Paste document content here…';
+  document.getElementById('upload-file').value = '';
+  document.getElementById('file-note').classList.add('hidden');
+  for (const cb of document.querySelectorAll('#upload-tags input')) cb.checked = false;
+  pendingBinary = null;
+}
+
+async function uploadDoc() {
+  const source = document.getElementById('upload-source').value.trim();
+  const content = document.getElementById('upload-content').value;
+  const tags = [...document.querySelectorAll('#upload-tags input:checked')].map(c => c.value);
+
+  if (!source) { showStatus('Source is required.', 'warning'); return; }
+  if (tags.length === 0) { showStatus('Select at least one access tag.', 'warning'); return; }
+  if (!pendingBinary && !content.trim()) { showStatus('Document text is required.', 'warning'); return; }
+
+  try {
+    const payload = pendingBinary
+      ? { file_base64: pendingBinary.b64, filename: source, acl_tags: tags }
+      : { content, source, acl_tags: tags };
+    const data = await api('/api/documents', { method: 'POST', body: JSON.stringify(payload) });
+    activeTasks.add(data.task_id);
+    showStatus(`Uploaded: ${source}`);
+    resetIntake();
+    loadDocs();
+  } catch (e) {
+    showStatus(`Failed to upload: ${e.message}`, 'warning');
+  }
+}
+
+async function triggerReembed() {
+  if (!confirm('Re-embed all documents? This rebuilds every indexed fragment.')) return;
+  try {
+    const data = await api('/api/reembed', { method: 'POST' });
+    showStatus(data.message);
+    loadDocs();
+  } catch (e) {
+    showStatus(`Failed to re-embed: ${e.message}`, 'warning');
+  }
+}
+
+/* ---------- MCP test console ---------- */
+const RAW_TEMPLATES = {
+  rag_search: { query: 'search query', top_k: 3 },
+  get_document: { source: 'document source' },
+  upload_document: { content: 'document text', source: 'source name', acl_tags: ['all'] },
+  get_task_status: { task_id: 'task-id' },
+};
+let mcpSession = null;
+let mcpRpcId = 0;
+let mcpInitPromise = null;
+
+class McpSessionError extends Error {}
+
+function parseSseEvent(event, id) {
+  for (const line of event.split('\n')) {
+    if (!line.startsWith('data:')) continue;
+    const data = line.slice(5).trim();
+    if (!data) continue;
+    try {
+      const msg = JSON.parse(data);
+      if (msg.id === id) return msg;
+    } catch {}
+  }
+  return null;
+}
+
+async function readSse(resp, id) {
+  const reader = resp.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true }).replace(/\r\n/g, '\n');
+      let idx;
+      while ((idx = buf.indexOf('\n\n')) >= 0) {
+        const event = buf.slice(0, idx);
+        buf = buf.slice(idx + 2);
+        const msg = parseSseEvent(event, id);
+        if (msg) return msg;
+      }
+    }
+    const msg = parseSseEvent(buf, id);
+    if (msg) return msg;
+  } finally {
+    reader.cancel().catch(() => {});
+  }
+  throw new Error('Stream ended without a response');
+}
+
+async function mcpRpc(method, params, opts = {}) {
+  const headers = {
+    'Authorization': `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+    'Accept': 'application/json, text/event-stream',
+  };
+  if (mcpSession) headers['mcp-session-id'] = mcpSession;
+
+  const body = { jsonrpc: '2.0', method };
+  if (params !== undefined) body.params = params;
+  if (!opts.notify) body.id = ++mcpRpcId;
+  const resp = await fetch('/mcp', { method: 'POST', headers, body: JSON.stringify(body) });
+  const sid = resp.headers.get('mcp-session-id');
+  if (sid) mcpSession = sid;
+  if (opts.notify) { resp.body?.cancel().catch(() => {}); return null; }
+  if (resp.status === 404) throw new McpSessionError('Session expired');
+  if (!resp.ok) {
+    let data = null;
+    try { data = await resp.json(); } catch {}
+    const err = new Error((data && data.error) || `HTTP ${resp.status}`);
+    err.status = resp.status;
+    throw err;
+  }
+  const msg = await readSse(resp, body.id);
+  if (msg.error) throw new Error(msg.error.message || JSON.stringify(msg.error));
+  return msg.result;
+}
+
+async function mcpInit() {
+  if (mcpInitPromise) return mcpInitPromise;
+  mcpInitPromise = (async () => {
+    await mcpRpc('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'contextvault-ui', version: '0.1.0' } });
+    await mcpRpc('notifications/initialized', {}, { notify: true });
+  })().catch(e => { mcpInitPromise = null; throw e; });
+  return mcpInitPromise;
+}
+
+async function mcpCall(method, params) {
+  try {
+    await mcpInit();
+    return await mcpRpc(method, params);
+  } catch (e) {
+    if (e instanceof McpSessionError) {
+      mcpSession = null;
+      mcpInitPromise = null;
+      await mcpInit();
+      return await mcpRpc(method, params);
+    }
+    throw e;
+  }
+}
+
+function setBusy(busy, label) {
+  for (const b of document.querySelectorAll('.pg-call-btn')) b.disabled = busy;
+  if (busy) {
+    document.getElementById('pg-dot').className = 'pg-dot pg-dot-busy';
+    document.getElementById('pg-meta-text').textContent = label;
+  }
+}
+
+function setOutput({ tool, ms, text, isError, raw }) {
+  document.getElementById('pg-empty').classList.add('hidden');
+  document.getElementById('pg-dot').className = 'pg-dot' + (isError ? ' pg-dot-error' : ' pg-dot-ok');
+  document.getElementById('pg-meta-text').textContent = `${tool} · ${ms} ms`;
+  const out = document.getElementById('pg-output');
+  out.textContent = text;
+  out.className = 'pg-output' + (isError ? ' pg-error' : '');
+  out.classList.remove('hidden');
+  document.getElementById('pg-raw').textContent = JSON.stringify(raw, null, 2);
+  document.getElementById('pg-raw-wrap').classList.remove('hidden');
+}
+
+async function callTool(name, args) {
+  const t0 = performance.now();
+  const result = await mcpCall('tools/call', { name, arguments: args });
+  return { result, ms: Math.round(performance.now() - t0) };
+}
+
+async function runCall(name, args) {
+  setBusy(true, `Running ${name}…`);
+  try {
+    const { result, ms } = await callTool(name, args);
+    const isError = result?.isError === true;
+    const text = (result?.content || []).map(c => c.text || '').join('\n') || (isError ? 'Tool error' : '(empty response)');
+    setOutput({ tool: name, ms, text, isError, raw: { request: { name, arguments: args }, response: result } });
+  } catch (e) {
+    if (e.status === 401) { showGate('API key is no longer valid.'); return; }
+    setOutput({ tool: name, ms: 0, text: `Error: ${e.message}`,isError: true, raw: { error: String(e.message) } });
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function runSearch() {
+  const query = document.getElementById('pg-query').value.trim();
+  if (!query) { showStatus('Query is required.', 'warning'); return; }
+  const topK = parseInt(document.getElementById('pg-topk').value, 10) || 3;
+  const args = { query, top_k: topK };
+  const tags = [...document.querySelectorAll('#test-tags input:checked')].map(c => c.value);
+  if (tags.length > 0) args.tags = tags;
+  await runCall('rag_search', args);
+}
+
+async function runGetDoc() {
+  const source = document.getElementById('pg-source').value.trim();
+  if (!source) { showStatus('Source is required.', 'warning'); return; }
+  const args = { source };
+  const section = document.getElementById('pg-section').value.trim();
+  if (section) args.section = section;
+  await runCall('get_document', args);
+}
+
+async function runRawCall() {
+  const name = document.getElementById('pg-tool').value;
+  let args;
+  try {
+    args = JSON.parse(document.getElementById('pg-args').value || '{}');
+  } catch {
+    showStatus('Arguments must be valid JSON.', 'warning'); return;
+  }
+  await runCall(name, args);
+}
+
+function prefillRawArgs() {
+  const name = document.getElementById('pg-tool').value;
+  document.getElementById('pg-args').value = JSON.stringify(RAW_TEMPLATES[name] || {}, null, 2);
+}
+
+function switchTab(view) {
+  const isTest = view === 'test';
+  document.getElementById('doc-view').classList.toggle('hidden', isTest);
+  document.getElementById('test-view').classList.toggle('hidden', !isTest);
+  for (const t of document.querySelectorAll('.tab')) t.classList.toggle('active', t.dataset.view === view);
+}
+
+function init() {
+  document.getElementById('key-btn').onclick = unlock;
+  document.getElementById('key-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') unlock(); });
+  document.getElementById('key-input').addEventListener('input', () => document.getElementById('gate-error').classList.add('hidden'));
+  document.getElementById('change-key-btn').onclick = () => showGate('Enter a new API key.');
+
+  document.querySelectorAll('.tab').forEach(t => t.onclick = () => switchTab(t.dataset.view));
+  document.getElementById('pg-search-btn').onclick = runSearch;
+  document.getElementById('pg-fetch-btn').onclick = runGetDoc;
+  document.getElementById('pg-call-btn').onclick = runRawCall;
+  document.getElementById('pg-tool').addEventListener('change', prefillRawArgs);
+  prefillRawArgs();
+
+  document.getElementById('refresh-btn').onclick = () => loadDocs();
+  document.getElementById('reembed-btn').onclick = triggerReembed;
+  document.getElementById('reembed-banner-btn').onclick = triggerReembed;
+  document.getElementById('upload-btn').onclick = uploadDoc;
+  document.getElementById('filter-input').addEventListener('input', (e) => { filterText = e.target.value; renderDocs(); });
+  document.getElementById('upload-file').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) handleFile(f); });
+
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('dropping'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dropping'));
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dz.classList.remove('dropping');
+    const f = e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
+
+  if (apiKey) {
+    enterVault();
+  } else {
+    showGate();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
