@@ -22,4 +22,4 @@ jobs:
       - run: bun run typecheck
       - run: docker build -t contextvault:ci .
       - run: docker run -d --name cv -p 8787:8787 -e CV_KEY_ADMIN=ci-admin -e CV_KEY_VIEWER=ci-viewer -e CONFIG_PATH=/app/config.example.toml contextvault:ci
-      - run: curl -sfS --retry 30 --retry-delay 2 --retry-connrefused http://127.0.0.1:8787/health || { docker logs cv; exit 1; }
+      - run: timeout 60 sh -c 'until curl -sf http://127.0.0.1:8787/health; do sleep 2; done' || { docker logs cv; exit 1; }
