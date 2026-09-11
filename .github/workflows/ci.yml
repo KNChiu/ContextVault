@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+  pull_request:
+    paths-ignore: ["**.md", "docs/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.x
+      - run: bun install --frozen-lockfile --ignore-scripts
+      - run: bun run typecheck
+      - run: docker build -t contextvault:ci .
+      - run: docker run -d --name cv -p 8787:8787 -e CV_KEY_ADMIN=ci-admin -e CV_KEY_VIEWER=ci-viewer -e CONFIG_PATH=/app/config.example.toml contextvault:ci
+      - run: curl -sf --retry 30 --retry-delay 2 --retry-connrefused http://localhost:8787/health || { docker logs cv; exit 1; }
